@@ -1,0 +1,15 @@
+
+
+*.exe
+*.hex
+*.elf
+*.s37
+*.bin
+*.o
+*.d
+*.cproject
+*.mk
+*.map
+*.ld
+*.axf
+
