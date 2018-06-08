@@ -4,6 +4,7 @@
 //#include "../drivers/segmentlcd.h"
 #include <string.h>
 
+extern void 	timer_irq_handler(void);
 /*
  * private variables
  */
@@ -56,7 +57,7 @@ uint16_t			uart_msg_freq=0;
 	  * simulate speed checks
 	  */
 	 #ifdef			 	DEBUG_MODE
-	 if(uart_msg_freq>=25){
+	 if(uart_msg_freq>=15){
 		 duty_cycle_sp+=(2*DUTY_STEP);
 		if(duty_cycle_sp>=DUTY_MAX){
 			duty_cycle_sp=DUTY_MAX;		//80% is max, 5% step size
@@ -76,13 +77,37 @@ uint16_t			uart_msg_freq=0;
 		 sprintf(rs232_buf,"Set point=\t%d\tmilli_second time=\t%ld\tDirection=%d\n",duty_cycle_sp,current_timer_value,(uint8_t)motor_direction_flag);
 		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 	 }
-	 if(motor_direction_flag){
-		 GPIO_PinOutSet(OUT_PORT, MOTOR_DIR);
-	 }
-	 else {
-		 GPIO_PinOutClear(OUT_PORT, MOTOR_DIR);
-	 }
 	 last_timer_value=current_timer_value;
+	 current_timer_value=1;
+	 current_timer_value=GPIO_PinInGet(SWITCH_PORT,OP_SW);
+	 if(current_timer_value==0){
+		 motor_direction_flag=!motor_direction_flag;
+		 if(motor_direction_flag){
+			 GPIO_PinOutSet(OUT_PORT, MOTOR_DIR);
+		 }
+		 else {
+			 GPIO_PinOutClear(OUT_PORT, MOTOR_DIR);
+		 }
+		#ifdef			 	DEBUG_MODE
+		uart_msg_freq++;
+		#endif
+		//if(debounce_op_sw_count>=1){
+		timer_irq_handler();
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		delay_ms(100);
+		//sprintf(rs232_buf,"OP SW is low\n");
+		//rs232_transmit_string(rs232_buf,strlen(rs232_buf));
+	 }
+
+	 delay_ms(25);
 
  }
 int main(void)
@@ -103,8 +128,8 @@ int main(void)
 			rs232_init();
 			rs232_enable();
 			timer_init();
-			sampling_timer_init();
-			//delay_init();
+			//sampling_timer_init();
+			delay_init();
 			//delay_ms(10);
 			 sprintf(rs232_buf,"\t\t***Debug mode: Init set point=\t%d***\n",duty_cycle_sp);
 			 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
@@ -117,6 +142,7 @@ int main(void)
 			int 		inner_loop_var=0;
 
   while (1) {
+	  sampler_function_hanlder();
 	  }
 
 }

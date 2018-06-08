@@ -37,8 +37,8 @@
 #define DUTY_75				768
 #define DUTY_100			1024
 #define DUTY_STEP			51		//5% step
-#define DUTY_MIN			102		//10%
-#define DUTY_MAX			819		//80%
+#define DUTY_MIN			408		//40%
+#define DUTY_MAX			1024	//100%
 /*
  * public variables
  */
