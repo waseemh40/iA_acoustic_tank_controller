@@ -36,6 +36,7 @@ void gpio_init(void){
 	GPIO_PinModeSet(SWITCH_PORT, OP_SW, gpioModeInput, 1);
 	GPIO_PinModeSet(SWITCH_PORT, DEC_SW, gpioModeInput, 1);
 	GPIO_PinModeSet(SWITCH_PORT, INC_SW, gpioModeInput, 1);
+	GPIO_PinModeSet(ENCODER_PORT, ENCODER_PIN, gpioModeInput, 1);
 			//INT setups
 	//GPIO_IntConfig(SWITCH_PORT,OP_SW,false,true,true);	//falling edge and enabled
 	GPIO_IntConfig(SWITCH_PORT,DEC_SW,false,true,true);

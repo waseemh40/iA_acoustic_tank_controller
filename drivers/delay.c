@@ -8,16 +8,19 @@
 
 #include "delay.h"
 
-extern void sampler_function_hanlder(void);
+
 /*
  * private variables
  */
 static 	uint32_t 	tenth_msec_counter=0;
 static 	uint32_t	last_timer_value=0;
-static	bool		timer_running=false;
+static 	uint8_t		count=0;
+static 	uint32_t	sum_frequency_value=0;
 /*
  * public variables
  */
+uint32_t	frequency_value=0;
+
 /*
  * IRQs
  */
@@ -31,10 +34,18 @@ void TIMER1_IRQHandler(void)
 }
 void TIMER2_IRQHandler(void)
 {
+
 	uint32_t	int_mask=TIMER_IntGet(SAMPLING_TIMER);
-	if(int_mask & TIMER_IF_OF){
-		TIMER_IntClear(SAMPLING_TIMER, TIMER_IF_OF);      // Clear overflow flag
-		sampler_function_hanlder();
+	if(int_mask & TIMER_IF_ICBOF0){
+		TIMER_IntClear(SAMPLING_TIMER, TIMER_IEN_ICBOF0);      // Clear CBOF flag
+		sum_frequency_value+=TIMER_CaptureGet(SAMPLING_TIMER,0);
+		count++;
+		if(count>=32){
+			frequency_value=sum_frequency_value>>5;
+			count=0;
+			sum_frequency_value=0;
+		}
+
 	}
 }
 /*
@@ -108,18 +119,6 @@ void 		pwm_stop(void){
 		 * Counter for speed measurement
 		 */
 void timer_irq_handler(void){
-
-/*	if(!timer_running){
-		tenth_msec_counter=0;
-		timer_running=true;
-		timer_start();
-	}
-	else{
-		timer_stop();
-		last_timer_value=tenth_msec_counter;
-		timer_running=false;
-	}
-*/
 	timer_stop();
 	last_timer_value=tenth_msec_counter;
 	tenth_msec_counter=0;
@@ -152,18 +151,27 @@ uint32_t timer_value(void){
 }
 	//control loop sample time timer
 void 		sampling_timer_init(void){
-  			//init timer
-	TIMER_Init_TypeDef SAMPLINGTimerInit = TIMER_INIT_DEFAULT;
-	SAMPLINGTimerInit.enable=true;
-	SAMPLINGTimerInit.prescale=timerPrescale1;
 
 	CMU_ClockEnable(SAMPLING_TMR_CLK, true);
-	TIMER_TopSet(SAMPLING_TIMER, SAMPLING_TIMER_TOP);
+
+  			//init timer
+	TIMER_Init_TypeDef ENCODERTimerInit = TIMER_INIT_DEFAULT;
+	ENCODERTimerInit.enable=true;
+	ENCODERTimerInit.riseAction=timerInputActionReloadStart;
+	ENCODERTimerInit.prescale=timerPrescale1;
+  			//set cc mode to PWM
+  	TIMER_InitCC_TypeDef ENCODERTimerCCInit = TIMER_INITCC_DEFAULT;
+  	ENCODERTimerCCInit.edge=timerEdgeRising;
+  	ENCODERTimerCCInit.mode=timerCCModeCapture;
+  	ENCODERTimerCCInit.filter= true;
+
+	TIMER_InitCC(SAMPLING_TIMER, 0, &ENCODERTimerCCInit);
+	SAMPLING_TIMER->ROUTE |= (TIMER_ROUTE_CC0PEN | TIMER_ROUTE_LOCATION_LOC1); 					//LOC 1, CC0 (PA12)
 	TIMER_CounterSet(SAMPLING_TIMER, 0);
-	TIMER_IntEnable(SAMPLING_TIMER, TIMER_IF_OF);     // Enable Timer1 overflow interrupt
-	NVIC_ClearPendingIRQ(SAMPLING_TIMER_IRQ);
-	NVIC_EnableIRQ(SAMPLING_TIMER_IRQ);				// Enable TIMER1 interrupt vector in NVIC
-	TIMER_Init(SAMPLING_TIMER, &SAMPLINGTimerInit);
+	TIMER_IntEnable(SAMPLING_TIMER, TIMER_IEN_ICBOF0);     // Enable Timer2 ICBOF
+	NVIC_ClearPendingIRQ(SAMPLING_IRQ);
+	NVIC_EnableIRQ(SAMPLING_IRQ);				// Enable TIMER2 interrupt vector in NVIC
+	TIMER_Init(SAMPLING_TIMER, &ENCODERTimerInit);
 
 	return;
 }

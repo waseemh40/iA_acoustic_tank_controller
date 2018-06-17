@@ -26,6 +26,7 @@
 #define SAMPLING_TMR_CLK	cmuClock_TIMER2
 #define SAMPLING_TIMER_IRQ	TIMER2_IRQn
 #define	SAMPLING_TIMER_TOP	60000		//25 Hz or 40msec sample time
+#define SAMPLING_IRQ		TIMER2_IRQn
 	//delay loop timer
 #define DELAY_TIMER			TIMER3
 #define DELAY_TMR_CLK		cmuClock_TIMER3
@@ -37,8 +38,12 @@
 #define DUTY_75				768
 #define DUTY_100			1024
 #define DUTY_STEP			51		//5% step
-#define DUTY_MIN			408		//40%
+#define DUTY_MIN			255		//25%
 #define DUTY_MAX			1024	//100%
+	//values for 8V
+#define PID_SP_STEP			5		//5% step
+#define PID_SP_MIN			0		//25%
+#define PID_SP_MAX			100		//100%
 /*
  * public variables
  */

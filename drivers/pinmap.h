@@ -25,7 +25,7 @@
 		 * gpioPort_n.pinNumber_x
 		 * e.g. SPI_port.MOSI
 		 */
-#define  	DEBUG_MODE			true
+//#define  	DEBUG_MODE			true
 		/*
 		 * Oscillators and Clocks
 		 */
@@ -38,6 +38,7 @@
 #define 	SWITCH_PORT			gpioPortB
 #define 	OUT_PORT			gpioPortE
 #define 	RS232_PORT			gpioPortC
+#define 	ENCODER_PORT		gpioPortA
 
 	//pins
 #define 	PWM_PIN				1			//PD1 <->	To breadboard
@@ -53,5 +54,7 @@
 
 #define 	RS232_TX			0			//PC0 <-> To breadboard
 #define 	RS232_RX			1			//PC1 <-> To breadborad
+
+#define 	ENCODER_PIN			12			//PA12 <-> To Encoder
 
 #endif /* DRIVERS_PINMAP_H_ */
