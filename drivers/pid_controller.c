@@ -16,7 +16,7 @@ int 	pid_control(uint16_t set_point,uint16_t feedback){
 		static 		int			i_error=0;
 		static 		int			control_out=0;
 		static 		int			shifted_out=0;
-		static 		int			dt=1/50;
+//		static 		int			dt=(1>>6);
 
 
 			//update errors
@@ -24,7 +24,7 @@ int 	pid_control(uint16_t set_point,uint16_t feedback){
 		i_error+=p_error;
 
 			//calculate control out
-		control_out+= (gain_kp*p_error) + (gain_ki*dt*i_error);
+		control_out+= (gain_kp*p_error) + ((gain_ki*i_error)>>6);		//>>6 is divide by 32msec
 
 			//anti-wind-up control
 
@@ -34,10 +34,19 @@ int 	pid_control(uint16_t set_point,uint16_t feedback){
 		if(control_out<=-1024){
 			control_out=-1024;
 		}
-		shifted_out=512+(control_out/2);
-		if(shifted_out<100){
-			shifted_out=102;
+		shifted_out=(int)(512+(control_out/2));
+		if(shifted_out<50){
+			shifted_out=100;
 		}
+		/*
+		if(control_out<0){
+			control_out=(-1*control_out);
+		}
+		if(control_out>=1024){
+			control_out=1024;
+		}
+		shifted_out=control_out;
+		*/
 		return shifted_out;
 
 }

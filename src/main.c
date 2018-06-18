@@ -12,7 +12,7 @@ extern uint32_t	frequency_value;
  */
 static uint16_t 	pid_sp=50;
 static int			control_out=0;
-static char 		rs232_buf[128];
+static char 		rs232_buf[512];
 static uint32_t 	converted_frequency_value=0;
 
 /*
@@ -73,7 +73,7 @@ uint16_t			uart_msg_freq=0;
 	 /*
 	  *
 	  */
-	 converted_frequency_value=(uint16_t)((370-frequency_value)/2.5);
+	 converted_frequency_value=(uint16_t)((500-frequency_value)/3.8);
 	 if(converted_frequency_value>100){
 		 converted_frequency_value=95;
 	 }
@@ -115,17 +115,8 @@ uint16_t			uart_msg_freq=0;
 	 control_out=pid_control(pid_sp,converted_frequency_value);
 //	 sprintf(rs232_buf,"\t\t\tfreq=%d\tfb_value=%ld\tset_point=\t%d\tcontrol_val=\t%d\n",frequency_value,converted_frequency_value,pid_sp,control_out);
 //	 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-
-	// if(control_out>0){
-		 pwm_generate((uint16_t)control_out);
-	 //}
-	 //else{
-	//	 control_out=-1*control_out;
-	//	 pwm_generate((uint16_t)control_out);
-	 //}
-	 //pwm_generate(162);
-
-	 delay_ms(50);
+	 pwm_generate((uint16_t)control_out);
+	 delay_ms(64);
 
  }
 int main(void)
@@ -148,7 +139,7 @@ int main(void)
 			timer_init();
 			sampling_timer_init();
 			delay_init();
-			pid_change_gains(3,20);
+			pid_change_gains(2,9);
 			//delay_ms(10);
 			 sprintf(rs232_buf,"\t\t***Debug mode: Init set point=\t%d***\n",pid_sp);
 			 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
