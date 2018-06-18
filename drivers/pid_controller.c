@@ -10,10 +10,14 @@
 
 static uint8_t 	gain_kp=1;
 static uint8_t	gain_ki=1;		//one-tenth of actual value
+static uint8_t 	gain_kd=1;
+
 
 int 	pid_control(uint16_t set_point,uint16_t feedback){
 		static		int			p_error=0;
 		static 		int			i_error=0;
+		static 		int			d_error=0;
+		static 		int			last_error=0;
 		static 		int			control_out=0;
 		static 		int			shifted_out=0;
 //		static 		int			dt=(1>>6);
@@ -22,9 +26,10 @@ int 	pid_control(uint16_t set_point,uint16_t feedback){
 			//update errors
 		p_error=set_point-feedback;
 		i_error+=p_error;
+		d_error=last_error-p_error;
 
 			//calculate control out
-		control_out+= (gain_kp*p_error) + ((gain_ki*i_error)>>6);		//>>6 is divide by 32msec
+		control_out+= (gain_kp*p_error) + ((gain_ki*i_error)>>6)+(d_error*(32/1000)*gain_kd);		//>>6 is divide by 32msec
 
 			//anti-wind-up control
 
