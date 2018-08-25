@@ -39,6 +39,7 @@
 #define 	OUT_PORT			gpioPortE
 #define 	RS232_PORT			gpioPortC
 #define 	ENCODER_PORT		gpioPortA
+#define 	ACOUSTIC_PORT		gpioPortD
 
 	//pins
 #define 	PWM_PIN				1			//PD1 <->	To breadboard
@@ -56,5 +57,7 @@
 #define 	RS232_RX			1			//PC1 <-> To breadborad
 
 #define 	ENCODER_PIN			12			//PA12 <-> To Encoder
+
+#define 	ACOUSTIC_PIN		6			//PD6 (CC0) <->	To breadboard
 
 #endif /* DRIVERS_PINMAP_H_ */

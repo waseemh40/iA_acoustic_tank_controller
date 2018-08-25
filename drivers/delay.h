@@ -10,23 +10,31 @@
 
 #include "pinmap.h"
 #include "em_timer.h"
+#include "em_burtc.h"
+#include "em_letimer.h"
 
 	//PWM timer
 #define PWM_TIMER 			TIMER0
 #define PWM_CLK				cmuClock_TIMER0
 #define	PWM_TOP				1024
-	//speed timer Timer clock=1.5 MHz Hz, Pre_scale=1, CPU clock=1.5 MHz
-#define SPEED_TIMER			TIMER1
-#define SPEED_TMR_CLK		cmuClock_TIMER1
-#define SPEED_TIMER_IRQ		TIMER1_IRQn
+	//speed timer Timer clock=1.5 MHz Hz, Pre_scale=1, CPU clock=1.5 MHz (BURTC)
+/*
+#define SPEED_TIMER			LETIMER0
+#define SPEED_TMR_CLK		cmuClock_LETIMER0
+#define SPEED_TIMER_IRQ		LETIMER0_IRQn
 #define	SPEED_TIMER_TOP		150			//for 0.1 msec....
-
-	//control loop timer
-#define SAMPLING_TIMER		TIMER2
-#define SAMPLING_TMR_CLK	cmuClock_TIMER2
-#define SAMPLING_TIMER_IRQ	TIMER2_IRQn
-#define	SAMPLING_TIMER_TOP	60000		//25 Hz or 40msec sample time
-#define SAMPLING_IRQ		TIMER2_IRQn
+*/
+#define ms_sec_top_ref		299	//0.1msec ->  @ 3MHz clock
+	//acoustic pulse
+#define ACOUSTIC_TIMER		TIMER1
+#define ACOUSTIC_TIMER_CLK	cmuClock_TIMER1
+#define	ACOUSTIC_TIMER_TOP	86		//(68965.5 Hz freq)
+	//Encoder loop timer
+#define ENCODER_TIMER		TIMER2
+#define ENCODER_TMR_CLK		cmuClock_TIMER2
+#define ENCODER_TIMER_IRQ	TIMER2_IRQn
+#define	ENCODER_TIMER_TOP	60000		//25 Hz or 40msec sample time
+#define ENCODER_IRQ			TIMER2_IRQn
 	//delay loop timer
 #define DELAY_TIMER			TIMER3
 #define DELAY_TMR_CLK		cmuClock_TIMER3
@@ -58,12 +66,15 @@ void 		pwm_generate(uint16_t duty_cycle);
 void 		pwm_stop(void);
 
 void 		timer_init(void);
-uint32_t	timer_value(void);
+uint32_t	timer_value(uint32_t *half_sec_value);
 
-void 		sampling_timer_init(void);
+void 		encoder_timer_init(void);
 
 void		delay_init(void);
 void 		delay_ms(uint8_t milli_sec);
 
+void 		acoustic_init(void);
+void 		pulses_stop(void);
+void 		pulses_generate(uint16_t duty_cycle);
 
 #endif /* SRC_DELAY_H_ */

@@ -12,7 +12,7 @@
  * extern declarations
  */
 
-extern void 	timer_irq_handler(void);
+extern void 	optical_sw_irq_handler();
 extern void 	inc_dec_irq_handler(uint8_t irq_number);
 extern bool		motor_direction_flag;
 
@@ -23,7 +23,6 @@ extern uint16_t	uart_msg_freq;
 /*
  * private shared variables
  */
-static uint8_t	debounce_op_sw_count=0;
 
 void gpio_init(void){
 	CMU_ClockEnable(cmuClock_GPIO, true);
@@ -32,6 +31,7 @@ void gpio_init(void){
 	GPIO_PinModeSet(PWM_PORT, PWM_PIN, gpioModePushPull, 0);
 	GPIO_PinModeSet(OUT_PORT, LED, gpioModePushPull, 0);
 	GPIO_PinModeSet(OUT_PORT, MOTOR_DIR, gpioModePushPull, 0);
+	GPIO_PinModeSet(ACOUSTIC_PORT, ACOUSTIC_PIN, gpioModePushPull, 0);
 			//inputs
 	GPIO_PinModeSet(SWITCH_PORT, OP_SW, gpioModeInput, 1);
 	GPIO_PinModeSet(SWITCH_PORT, DEC_SW, gpioModeInput, 1);
@@ -48,7 +48,9 @@ void gpio_init(void){
 	GPIO_PinOutClear(PWM_PORT, PWM_PIN);
 	GPIO_PinOutClear(OUT_PORT, LED);
 	GPIO_PinOutClear(OUT_PORT, MOTOR_DIR);
-	pwm_init();
+	GPIO_PinOutClear(ACOUSTIC_PORT, ACOUSTIC_PIN);
+
+	//pwm_init();
 	return;
 }
 
@@ -57,16 +59,11 @@ void GPIO_ODD_IRQHandler()
 	uint32_t int_mask = GPIO_IntGetEnabled();
 	GPIO_IntClear(int_mask);
 	if (int_mask & 1<<OP_SW){
-		//debounce_op_sw_count++;
 
 		#ifdef			 	DEBUG_MODE
 		uart_msg_freq++;
 		#endif
-		//if(debounce_op_sw_count>=1){
-			timer_irq_handler();
-			motor_direction_flag=!motor_direction_flag;
-			debounce_op_sw_count=0;
-		//}
+			optical_sw_irq_handler();
 	}
 	else if (int_mask & 1<<DEC_SW){
 		inc_dec_irq_handler(DEC_SW);

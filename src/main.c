@@ -3,9 +3,10 @@
 #include "../drivers/rs232.h"
 #include "../drivers/pid_controller.h"
 #include <string.h>
+#include "em_rmu.h"
 
-extern void 	timer_irq_handler(void);
-extern uint32_t	frequency_value;
+//extern void 	timer_irq_handler(void);
+extern uint32_t	rpm_scaled;		//rpm=90000/rpm_sclaed (does not include gear ratio)
 
 /*
  * private variables
@@ -13,7 +14,7 @@ extern uint32_t	frequency_value;
 static uint16_t 	pid_sp=50;
 static int			control_out=0;
 static char 		rs232_buf[512];
-static uint32_t 	converted_frequency_value=0;
+static uint32_t 	converted_rpm_to_fb=0;
 
 /*
  * public variables
@@ -50,10 +51,17 @@ uint16_t			uart_msg_freq=0;
 	//pwm_generate(pid_sp);
 	return;
 }
+ void 	optical_sw_irq_handler(){
+		motor_direction_flag=!motor_direction_flag;
+
+ }
+
 
  void sampler_function_hanlder(void){
-	 static uint32_t last_timer_value=0;
 	 static uint32_t current_timer_value=0;
+	 static	uint32_t half_sec_value=0;
+	 		uint32_t read_switch_input=0;
+
 	 /*
 	  * simulate speed checks
 	  */
@@ -73,22 +81,31 @@ uint16_t			uart_msg_freq=0;
 	 /*
 	  *
 	  */
-	 converted_frequency_value=(uint16_t)((500-frequency_value)/3.8);
-	 if(converted_frequency_value>100){
-		 converted_frequency_value=95;
+	 	 	 //feedback signal and rmp related
+	 converted_rpm_to_fb=(uint16_t)((165-rpm_scaled)*1.1);
+	 if(converted_rpm_to_fb>100){
+		 converted_rpm_to_fb=95;
 	 }
-	 if(converted_frequency_value<0){
-		 converted_frequency_value=0;
+	 if(converted_rpm_to_fb<0){
+		 converted_rpm_to_fb=0;
 	 }
-	 current_timer_value=timer_value();
-	 if(last_timer_value!=current_timer_value){
-		 sprintf(rs232_buf,"freq=%d\tfb_value=%ld\tset_point=\t%d\tcontrol_val=\t%d\t\tmilli_second_time=\t%ld\tdirection=%d\n",frequency_value,converted_frequency_value,pid_sp,control_out,current_timer_value,(uint8_t)motor_direction_flag);
+	 	 	 //timer related
+	 current_timer_value=timer_value(&half_sec_value);
+		 	 //acoustic pulses
+	 if(half_sec_value%200<=10 && half_sec_value!=0) //%10=0 -> 1 sec and %20=0 -> 2 secs
+	 {
+		 pulses_generate(10);
+		 delay_ms(100);
+		 delay_ms(50);
+		 pulses_stop();
+		 sprintf(rs232_buf,"RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\n",(90000/rpm_scaled),(half_sec_value/50),pid_sp);
 		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 	 }
-	 last_timer_value=current_timer_value;
-	 current_timer_value=1;
-	 current_timer_value=GPIO_PinInGet(SWITCH_PORT,OP_SW);
-	 if(current_timer_value==0){
+	 	 	 //OP switch input
+	 read_switch_input=1;
+	 read_switch_input=GPIO_PinInGet(SWITCH_PORT,OP_SW);
+	 if(read_switch_input==0){
+		 	 //motor direction and de-bounce
 		 motor_direction_flag=!motor_direction_flag;
 		 if(motor_direction_flag){
 			 GPIO_PinOutSet(OUT_PORT, MOTOR_DIR);
@@ -99,25 +116,21 @@ uint16_t			uart_msg_freq=0;
 		#ifdef			 	DEBUG_MODE
 		uart_msg_freq++;
 		#endif
-		//if(debounce_op_sw_count>=1){
-		timer_irq_handler();
+		current_timer_value=timer_value(&half_sec_value);
+		timer_stop();
 		delay_ms(100);
 		delay_ms(100);
 		delay_ms(100);
 		delay_ms(100);
 		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
+			//timer related
+		timer_start();
+		sprintf(rs232_buf,"\t\t\t\tGlobal_Timer=%d\tdirection=%d\n",current_timer_value,motor_direction_flag);
+		rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 	 }
-	 control_out=pid_control(pid_sp,converted_frequency_value);
-//	 sprintf(rs232_buf,"\t\t\tfreq=%d\tfb_value=%ld\tset_point=\t%d\tcontrol_val=\t%d\n",frequency_value,converted_frequency_value,pid_sp,control_out);
-//	 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-	 pwm_generate((uint16_t)control_out);
-	 delay_ms(64);
-
+//	 control_out=pid_control(pid_sp,converted_rpm_to_fb);
+	 pwm_generate((uint16_t)(10*pid_sp));
+	 delay_ms(40);
  }
 int main(void)
 {
@@ -126,9 +139,12 @@ int main(void)
 	  */
 			CHIP_Init();
 			CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
+			CMU_OscillatorEnable(cmuOsc_LFXO, true, true);
 			CMU_ClockSelectSet (cmuClock_HF, cmuSelect_HFXO);
-			CMU_ClockDivSet (cmuClock_CORE,cmuClkDiv_32);
-			CMU_ClockDivSet (cmuClock_HFPER ,cmuClkDiv_32);
+			CMU_ClockDivSet (cmuClock_CORE,cmuClkDiv_8);
+			CMU_ClockDivSet (cmuClock_HFPER ,cmuClkDiv_8);
+			CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_HFCLKLE);
+
 	 /*
 	  *******************************************************
 	  */
@@ -136,10 +152,12 @@ int main(void)
 			pwm_init();
 			rs232_init();
 			rs232_enable();
-			timer_init();
-			sampling_timer_init();
 			delay_init();
+			RMU_ResetControl(rmuResetBU, rmuResetModeClear);
+			timer_init();
+			encoder_timer_init();
 			pid_change_gains(2,9);
+			acoustic_init();
 			//delay_ms(10);
 			 sprintf(rs232_buf,"\t\t***Debug mode: Init set point=\t%d***\n",pid_sp);
 			 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
@@ -147,6 +165,8 @@ int main(void)
 			GPIO_PinOutSet(OUT_PORT, 2);
 			GPIO_PinOutSet(OUT_PORT, 3);
 			while(!start_flag);
+			timer_start();
+
   while (1) {
 	  sampler_function_hanlder();
 	  }
