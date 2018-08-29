@@ -6,12 +6,12 @@
 #include "em_rmu.h"
 
 //extern void 	timer_irq_handler(void);
-extern uint32_t	rpm_scaled;		//rpm=90000/rpm_sclaed (does not include gear ratio)
+//extern uint32_t	rpm_scaled;		//rpm=90000/rpm_sclaed (does not include gear ratio)
 
 /*
  * private variables
  */
-static uint16_t 	pid_sp=102;
+static uint16_t 	pid_sp=PID_SP_MIN;
 static int			control_out=0;
 static char 		rs232_buf[512];
 static uint32_t 	converted_rpm_to_fb=0;
@@ -84,14 +84,14 @@ uint16_t			uart_msg_freq=0;
 	 /*
 	  *
 	  */
-	 	 	 //feedback signal and rmp related
-	 converted_rpm_to_fb=(uint16_t)((165-rpm_scaled)*1.1);
-	 if(converted_rpm_to_fb>100){
-		 converted_rpm_to_fb=95;
-	 }
-	 if(converted_rpm_to_fb<0){
-		 converted_rpm_to_fb=0;
-	 }
+//	 	 	 //feedback signal and rmp related
+//	 converted_rpm_to_fb=(uint16_t)((165-rpm_scaled)*1.1);
+//	 if(converted_rpm_to_fb>100){
+//		 converted_rpm_to_fb=95;
+//	 }
+//	 if(converted_rpm_to_fb<0){
+//		 converted_rpm_to_fb=0;
+//	 }
 	 	 	 //timer related
 	 current_timer_value=timer_value(&half_sec_value);
 		 	 //acoustic pulses
@@ -110,7 +110,8 @@ uint16_t			uart_msg_freq=0;
 		 delay_ms(50);
 		 pulses_stop();
 		 encoder_stop();
-		 sprintf(rs232_buf,"RM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",rpm_scaled,(90000/rpm_scaled),(half_sec_value/50),pid_sp,pulses_generated);
+		 read_switch_input=encoder_value();
+		 sprintf(rs232_buf,"RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(90000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
 		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 	 }
 	 	 	 //OP switch input
@@ -174,6 +175,7 @@ int main(void)
 			RMU_ResetControl(rmuResetBU, rmuResetModeClear);
 			timer_init();
 			encoder_timer_init();
+			encoder_stop();
 			pid_change_gains(2,9);
 			acoustic_init();
 			//delay_ms(10);

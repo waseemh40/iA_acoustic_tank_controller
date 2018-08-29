@@ -49,9 +49,9 @@
 #define DUTY_MIN			103		//10%
 #define DUTY_MAX			615		//60%
 	//values for 8V
-#define PID_SP_STEP			51		//5% step
-#define PID_SP_MIN			102		//10%
-#define PID_SP_MAX			614		//60%
+#define PID_SP_STEP			102		//5% step
+#define PID_SP_MIN			204		//20%
+#define PID_SP_MAX			1024	//100%
 /*
  * public variables
  */
@@ -69,6 +69,9 @@ void 		timer_init(void);
 uint32_t	timer_value(uint32_t *half_sec_value);
 
 void 		encoder_timer_init(void);
+void 		encoder_start(void);
+void 		encoder_stop(void);
+uint32_t 	encoder_value(void);
 
 void		delay_init(void);
 void 		delay_ms(uint8_t milli_sec);

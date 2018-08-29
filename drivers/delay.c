@@ -86,12 +86,24 @@ void 		timer_start(void){
 }
 
 void 		encoder_stop(void){
+  	TIMER_InitCC_TypeDef ENCODERTimerCCInit = TIMER_INITCC_DEFAULT;
+  	ENCODERTimerCCInit.edge=timerEdgeRising;
+  	ENCODERTimerCCInit.mode=timerCCModeOff;//timerCCModeCapture
+  	ENCODERTimerCCInit.filter= true;
+	TIMER_InitCC(ENCODER_TIMER, 0, &ENCODERTimerCCInit);
+	TIMER_CounterSet(ENCODER_TIMER, 0);
 	TIMER_Enable(ENCODER_TIMER,false);
 	return;
 }
 void 		encoder_start(void){
 	sum_rpm_scaled=0;
 	count=0;
+  	TIMER_InitCC_TypeDef ENCODERTimerCCInit = TIMER_INITCC_DEFAULT;
+  	ENCODERTimerCCInit.edge=timerEdgeRising;
+  	ENCODERTimerCCInit.mode=timerCCModeCapture;//timerCCModeCapture
+  	ENCODERTimerCCInit.filter= true;
+	TIMER_InitCC(ENCODER_TIMER, 0, &ENCODERTimerCCInit);
+	TIMER_CounterSet(ENCODER_TIMER, 0);
 	TIMER_Enable(ENCODER_TIMER,true);
 	return;
 }
@@ -192,7 +204,7 @@ void 		encoder_timer_init(void){
   			//set cc mode to PWM
   	TIMER_InitCC_TypeDef ENCODERTimerCCInit = TIMER_INITCC_DEFAULT;
   	ENCODERTimerCCInit.edge=timerEdgeRising;
-  	ENCODERTimerCCInit.mode=timerCCModeCapture;
+  	ENCODERTimerCCInit.mode=timerCCModeOff;//timerCCModeCapture
   	ENCODERTimerCCInit.filter= true;
 
 	TIMER_InitCC(ENCODER_TIMER, 0, &ENCODERTimerCCInit);
