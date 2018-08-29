@@ -95,7 +95,7 @@ uint16_t			uart_msg_freq=0;
 	 	 	 //timer related
 	 current_timer_value=timer_value(&half_sec_value);
 		 	 //acoustic pulses
-	 if(half_sec_value%200<=5 && half_sec_value!=0) //%100=0 -> 1 sec and %200=0 -> 2 secs
+	 if(half_sec_value%150<=5 && half_sec_value!=0) //%100=0 -> 1 sec and %200=0 -> 2 secs
 	 {
 		 pulses_generated++;
 		 if(pulses_generated%80==0){
@@ -104,11 +104,13 @@ uint16_t			uart_msg_freq=0;
 				pid_sp=PID_SP_MAX;		//60% is max, 5% step size
 			}
 		 }
+		 encoder_start();
 		 pulses_generate(10);
 		 delay_ms(100);
 		 delay_ms(50);
 		 pulses_stop();
-		 sprintf(rs232_buf,"RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(90000/rpm_scaled),(half_sec_value/50),pid_sp,pulses_generated);
+		 encoder_stop();
+		 sprintf(rs232_buf,"RM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",rpm_scaled,(90000/rpm_scaled),(half_sec_value/50),pid_sp,pulses_generated);
 		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 	 }
 	 	 	 //OP switch input

@@ -45,10 +45,11 @@ void TIMER2_IRQHandler(void)
 	if(int_mask & TIMER_IF_ICBOF0){
 		sum_rpm_scaled+=TIMER_CaptureGet(ENCODER_TIMER,0);
 		count++;
-		if(count>=4){
-			rpm_scaled=sum_rpm_scaled>>2;
+		if(count>=64){
+			rpm_scaled=sum_rpm_scaled>>6;
 			count=0;
 			sum_rpm_scaled=0;
+			encoder_stop();
 		}
 		TIMER_IntClear(ENCODER_TIMER, TIMER_IEN_ICBOF0);      // Clear CBOF flag
 	}
@@ -86,10 +87,11 @@ void 		timer_start(void){
 
 void 		encoder_stop(void){
 	TIMER_Enable(ENCODER_TIMER,false);
-	tenth_msec_counter=0;
 	return;
 }
 void 		encoder_start(void){
+	sum_rpm_scaled=0;
+	count=0;
 	TIMER_Enable(ENCODER_TIMER,true);
 	return;
 }
@@ -184,7 +186,7 @@ void 		encoder_timer_init(void){
 
   			//init timer
 	TIMER_Init_TypeDef ENCODERTimerInit = TIMER_INIT_DEFAULT;
-	ENCODERTimerInit.enable=true;
+	ENCODERTimerInit.enable=false;
 	ENCODERTimerInit.riseAction=timerInputActionReloadStart;
 	ENCODERTimerInit.prescale=timerPrescale4;
   			//set cc mode to PWM
@@ -202,6 +204,10 @@ void 		encoder_timer_init(void){
 	TIMER_Init(ENCODER_TIMER, &ENCODERTimerInit);
 
 	return;
+}
+
+uint32_t 	encoder_value(void){
+	return (rpm_scaled);
 }
 		//delay timer
 void delay_init(void){
