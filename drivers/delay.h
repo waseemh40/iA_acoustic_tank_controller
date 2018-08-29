@@ -46,12 +46,12 @@
 #define DUTY_75				768
 #define DUTY_100			1024
 #define DUTY_STEP			51		//5% step
-#define DUTY_MIN			255		//25%
-#define DUTY_MAX			1024	//100%
+#define DUTY_MIN			103		//10%
+#define DUTY_MAX			615		//60%
 	//values for 8V
-#define PID_SP_STEP			5		//5% step
-#define PID_SP_MIN			0		//25%
-#define PID_SP_MAX			100		//100%
+#define PID_SP_STEP			51		//5% step
+#define PID_SP_MIN			102		//10%
+#define PID_SP_MAX			614		//60%
 /*
  * public variables
  */

@@ -45,8 +45,8 @@ void TIMER2_IRQHandler(void)
 	if(int_mask & TIMER_IF_ICBOF0){
 		sum_rpm_scaled+=TIMER_CaptureGet(ENCODER_TIMER,0);
 		count++;
-		if(count>=32){
-			rpm_scaled=sum_rpm_scaled>>5;
+		if(count>=4){
+			rpm_scaled=sum_rpm_scaled>>2;
 			count=0;
 			sum_rpm_scaled=0;
 		}
@@ -81,6 +81,16 @@ void 		timer_stop(void){
 }
 void 		timer_start(void){
 	LETIMER_Enable(LETIMER0,true);
+	return;
+}
+
+void 		encoder_stop(void){
+	TIMER_Enable(ENCODER_TIMER,false);
+	tenth_msec_counter=0;
+	return;
+}
+void 		encoder_start(void){
+	TIMER_Enable(ENCODER_TIMER,true);
 	return;
 }
 
@@ -155,7 +165,7 @@ void 		timer_init(void){
 	NVIC_ClearPendingIRQ(LETIMER0_IRQn);
 	NVIC_EnableIRQ(LETIMER0_IRQn);
 	delay_ms(100);
-
+	timer_start();
 	return;
 }
 
