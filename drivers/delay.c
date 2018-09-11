@@ -77,8 +77,8 @@ void 		acoustic_disable(){
 }
 void 		timer_stop(void){
 	LETIMER_Enable(LETIMER0,false);
-	tenth_msec_counter=0;
-	half_sec_counter=10;
+	//tenth_msec_counter=0;
+	half_sec_counter=0;
 	return;
 }
 void 		timer_start(void){

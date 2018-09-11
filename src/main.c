@@ -15,7 +15,12 @@ static uint16_t 	pid_sp=PID_SP_MIN;
 static int			control_out=0;
 static char 		rs232_buf[512];
 static uint32_t 	converted_rpm_to_fb=0;
+static uint16_t 	mod_factor=2;
 
+
+#define N_PULSES		1
+
+void delay_multiple(int factor,int delay);
 /*
  * public variables
  */
@@ -49,6 +54,25 @@ uint16_t			uart_msg_freq=0;
 		pid_sp=PID_SP_MIN;		//10% is min, 5% step size
 	}
 	pwm_generate((uint16_t)pid_sp);
+	if(pid_sp<410)
+	{
+		if (N_PULSES==1)
+		{
+			mod_factor=1100;
+		}
+		else{
+			mod_factor=550;
+		}
+ 	 }
+ 	 else
+		if (N_PULSES==1)
+		{
+			mod_factor=550;
+		}
+		else{
+			mod_factor=200;
+		}
+
 	return;
 }
  void 	optical_sw_irq_handler(){
@@ -64,6 +88,7 @@ uint16_t			uart_msg_freq=0;
 	 static	uint32_t pulses_generated=0;
 	 static bool	 flag_start_pulses=false;
 	 	 	 uint32_t read_switch_input=0;
+	 	 	 int 	 loop_var=0;
 
 
 	 /*
@@ -96,81 +121,27 @@ uint16_t			uart_msg_freq=0;
 	 	 	 //timer related
 	 current_timer_value=timer_value(&half_sec_value);
 		 	 //acoustic pulses
-	 if(half_sec_value%200<=2 && flag_start_pulses==true) //%100=0 -> 1 sec and %200=0 -> 2 secs
+	 if(half_sec_value%mod_factor<=3 && flag_start_pulses==true) //%100=0 -> 1 sec and %200=0 -> 2 secs
 	 {
-		 pulses_generated++;
-		 if(pulses_generated%80==0){
-			 pid_sp+=PID_SP_STEP;
-			if(pid_sp>=PID_SP_MAX){
-				pid_sp=PID_SP_MAX;		//60% is max, 5% step size
-			}
+		 for (loop_var=0;loop_var<N_PULSES;loop_var++){
+			 pulses_generated++;
+
+			 encoder_start();
+			 pulses_generate(10);
+			 delay_ms(100);
+			 delay_ms(50);
+			 pulses_stop();
+			 encoder_stop();
+			 read_switch_input=0;
+			 read_switch_input=encoder_value();
+
+			 sprintf(rs232_buf,"%d .RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",loop_var,(180000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
+			 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
+
+			 delay_multiple(7,100);
+
 		 }
 
-		 encoder_start();
-		 pulses_generate(10);
-		 delay_ms(100);
-		 delay_ms(50);
-		 pulses_stop();
-		 encoder_stop();
-		 read_switch_input=encoder_value();
-		 sprintf(rs232_buf,"1.RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(180000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
-		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-
-		 delay_ms(100);
-		 delay_ms(100);
-		 delay_ms(100);
-
-		 encoder_start();
-		 pulses_generate(10);
-		 delay_ms(100);
-		 delay_ms(50);
-		 pulses_stop();
-		 encoder_stop();
-		 read_switch_input=encoder_value();
-		 sprintf(rs232_buf,"2.RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(180000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
-		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-
-		 delay_ms(100);
-		 delay_ms(100);
-		 delay_ms(100);
-
-		 encoder_start();
-		 pulses_generate(10);
-		 delay_ms(100);
-		 delay_ms(50);
-		 pulses_stop();
-		 encoder_stop();
-		 read_switch_input=encoder_value();
-		 sprintf(rs232_buf,"3.RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(180000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
-		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-
-		 delay_ms(100);
-		 delay_ms(100);
-		 delay_ms(100);
-
-		 encoder_start();
-		 pulses_generate(10);
-		 delay_ms(100);
-		 delay_ms(50);
-		 pulses_stop();
-		 encoder_stop();
-		 read_switch_input=encoder_value();
-		 sprintf(rs232_buf,"4.RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(180000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
-		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-
-		 delay_ms(100);
-		 delay_ms(100);
-		 delay_ms(100);
-
-		 encoder_start();
-		 pulses_generate(10);
-		 delay_ms(100);
-		 delay_ms(50);
-		 pulses_stop();
-		 encoder_stop();
-		 read_switch_input=encoder_value();
-		 sprintf(rs232_buf,"5.RPM=%d\tHalf_sec_count=%ld\tSet_Point=%d\tPulse_number=%d\t\n",(180000/read_switch_input),(half_sec_value/50),pid_sp,pulses_generated);
-		 rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 
 		 flag_start_pulses=false;
 
@@ -192,21 +163,12 @@ uint16_t			uart_msg_freq=0;
 		#endif
 		current_timer_value=timer_value(&half_sec_value);
 		timer_stop();
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-		delay_ms(100);
-			//timer related
 		timer_start();
-		sprintf(rs232_buf,"\t\t\t\tGlobal_Timer=%d\tTrip_Time=%d\tDirection=%d\n",current_timer_value,(current_timer_value),motor_direction_flag);
+		delay_multiple(10,100);
+			//timer related
+		sprintf(rs232_buf,"\t\t\t\tGlobal_Timer=%d\tTrip_Time=%d\tDirection=%d\n",current_timer_value,(current_timer_value-last_timer_value),motor_direction_flag);
 		rs232_transmit_string(rs232_buf,strlen(rs232_buf));
-		//last_timer_value=current_timer_value;
+		last_timer_value=current_timer_value;
 		flag_start_pulses=true;
 	 }
 //	 control_out=pid_control(pid_sp,converted_rpm_to_fb);
@@ -252,4 +214,11 @@ int main(void)
 	  sampler_function_hanlder();
 	  }
 
+}
+void delay_multiple(int factor,int delay){
+	int loop_var=0;
+
+	for (loop_var=0;loop_var<factor;loop_var++){
+		delay_ms(delay);
+	}
 }
