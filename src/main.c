@@ -18,7 +18,7 @@ static uint32_t 	converted_rpm_to_fb=0;
 static uint16_t 	mod_factor=2;
 
 
-#define N_PULSES		1
+#define N_PULSES		5
 
 void delay_multiple(int factor,int delay);
 /*
@@ -150,6 +150,8 @@ uint16_t			uart_msg_freq=0;
 	 read_switch_input=1;
 	 read_switch_input=GPIO_PinInGet(SWITCH_PORT,OP_SW);
 	 if(read_switch_input==0){
+		pwm_generate((uint16_t)220);
+		delay_multiple(5,100);
 		 	 //motor direction and de-bounce
 		 motor_direction_flag=!motor_direction_flag;
 		 if(motor_direction_flag){
@@ -161,12 +163,13 @@ uint16_t			uart_msg_freq=0;
 		#ifdef			 	DEBUG_MODE
 		uart_msg_freq++;
 		#endif
-		current_timer_value=timer_value(&half_sec_value);
 		timer_stop();
 		timer_start();
 		delay_multiple(10,100);
+		pwm_generate((uint16_t)pid_sp);
+		current_timer_value=timer_value(&half_sec_value);
 			//timer related
-		sprintf(rs232_buf,"\t\t\t\tGlobal_Timer=%d\tTrip_Time=%d\tDirection=%d\n",current_timer_value,(current_timer_value-last_timer_value),motor_direction_flag);
+		sprintf(rs232_buf,"\t\t\t\tGlobal_Timer=%d\tTrip_Time=%d\tTrip_Time_without_1.5=%d\tDirection=%d\n",current_timer_value,(current_timer_value-last_timer_value-15000),(current_timer_value-last_timer_value),motor_direction_flag);
 		rs232_transmit_string(rs232_buf,strlen(rs232_buf));
 		last_timer_value=current_timer_value;
 		flag_start_pulses=true;
