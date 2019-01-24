@@ -30,6 +30,7 @@ void gpio_init(void){
 			//outputs
 	GPIO_PinModeSet(PWM_PORT, PWM_PIN, gpioModePushPull, 0);
 	GPIO_PinModeSet(OUT_PORT, LED, gpioModePushPull, 0);
+	GPIO_PinModeSet(OUT_PORT, LED_2, gpioModePushPull, 0);
 	GPIO_PinModeSet(OUT_PORT, MOTOR_DIR, gpioModePushPull, 0);
 	GPIO_PinModeSet(ACOUSTIC_PORT, ACOUSTIC_PIN, gpioModePushPull, 0);
 			//inputs
@@ -63,7 +64,7 @@ void GPIO_ODD_IRQHandler()
 		#ifdef			 	DEBUG_MODE
 		uart_msg_freq++;
 		#endif
-			optical_sw_irq_handler();
+			//optical_sw_irq_handler();
 	}
 	else if (int_mask & 1<<DEC_SW){
 		inc_dec_irq_handler(DEC_SW);

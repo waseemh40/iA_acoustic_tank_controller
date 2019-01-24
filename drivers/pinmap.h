@@ -51,6 +51,7 @@
 #define		INC_SW				10			//PB10 <-> 	On board
 
 #define		LED					3			//PE3 <-> 	On  board
+#define		LED_2				2			//PE2 <-> 	On  board
 #define		MOTOR_DIR			2			//PE2 <-> 	To breadboard
 
 #define 	RS232_TX			0			//PC0 <-> To breadboard
