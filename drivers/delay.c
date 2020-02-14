@@ -22,7 +22,7 @@ static 	uint32_t 	half_sec_counter=0;
  */
 uint32_t	rpm_scaled=0;
 char 		rs232_buf[64];
-
+bool		timer_flag=false;
 
 /*
  * IRQs
@@ -33,8 +33,9 @@ void LETIMER0_IRQHandler(void)
 	if(int_mask & LETIMER_IF_UF){
 		LETIMER_IntClear(LETIMER0,int_mask);      // Clear overflow flag
 		tenth_msec_counter++;                     // Increment counter
-		if (tenth_msec_counter%100==0 && tenth_msec_counter!=0){
-			half_sec_counter++;
+		if (tenth_msec_counter>=1000){
+			timer_flag=true;
+			tenth_msec_counter=0;
 		}
 	}
 }
@@ -119,7 +120,7 @@ void 		pwm_init(void){
   			//init timer
 	TIMER_Init_TypeDef PWMTimerInit = TIMER_INIT_DEFAULT;
   	PWMTimerInit.enable=false;
-  	PWMTimerInit.prescale=timerPrescale64;
+  	PWMTimerInit.prescale=timerPrescale1;
   			//set cc mode to PWM
   	TIMER_InitCC_TypeDef PWMTimerCCInit = TIMER_INITCC_DEFAULT;
   	PWMTimerCCInit.cmoa=timerOutputActionToggle ;	//should be ignored
@@ -144,8 +145,8 @@ void 		pwm_generate(uint16_t duty_cycle){
 		duty_cycle=DUTY_0;
 	}
 	TIMER_CounterSet(PWM_TIMER, 0);
-	TIMER_CompareSet(PWM_TIMER, 0, (uint32_t)duty_cycle);
-	TIMER_CompareBufSet(PWM_TIMER, 0, (uint32_t)duty_cycle);
+	TIMER_CompareSet(PWM_TIMER, 0, (uint32_t)43);
+	TIMER_CompareBufSet(PWM_TIMER, 0, (uint32_t)43);
 	pwm_enable();
 	return;
 }

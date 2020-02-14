@@ -49,6 +49,8 @@
 //#define		SATRT_SW			12			//PB12 <-> 	To breadboard (Maybe Not used)
 #define		DEC_SW				9			//PB9 <-> 	On board
 #define		INC_SW				10			//PB10 <-> 	On board
+#define		DEC_SW_2			5			//PD5 <-> 	EXP header
+#define		INC_SW_2			12			//PB12 <-> 	EXP header
 
 #define		LED					3			//PE3 <-> 	On  board
 #define		LED_2				2			//PE2 <-> 	On  board
@@ -60,5 +62,6 @@
 #define 	ENCODER_PIN			12			//PA12 <-> To Encoder
 
 #define 	ACOUSTIC_PIN		6			//PD6 (CC0) <->	To breadboard
+#define 	ACOUSTIC_PIN2		2			//PD2 (CC1) <->	To breadboard
 
 #endif /* DRIVERS_PINMAP_H_ */

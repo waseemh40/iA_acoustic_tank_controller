@@ -16,7 +16,7 @@
 	//PWM timer
 #define PWM_TIMER 			TIMER0
 #define PWM_CLK				cmuClock_TIMER0
-#define	PWM_TOP				1024
+#define	PWM_TOP				86
 	//speed timer Timer clock=1.5 MHz Hz, Pre_scale=1, CPU clock=1.5 MHz (BURTC)
 /*
 #define SPEED_TIMER			LETIMER0
@@ -24,7 +24,7 @@
 #define SPEED_TIMER_IRQ		LETIMER0_IRQn
 #define	SPEED_TIMER_TOP		150			//for 0.1 msec....
 */
-#define ms_sec_top_ref		299	//0.1msec ->  @ 3MHz clock
+#define ms_sec_top_ref		299	//299->0.1msec ->  @ 3MHz clock
 	//acoustic pulse
 #define ACOUSTIC_TIMER		TIMER1
 #define ACOUSTIC_TIMER_CLK	cmuClock_TIMER1

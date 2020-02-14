@@ -6,6 +6,7 @@
 #include "em_rmu.h"
 #include "em_dac.h"
 #include "em_opamp.h"
+#include "segmentlcd.h"
 
 //extern void 	timer_irq_handler(void);
 //extern uint32_t	rpm_scaled;		//rpm=90000/rpm_sclaed (does not include gear ratio)
@@ -25,12 +26,16 @@
 
 
 void delay_multiple(int factor,int delay);
+void pulses_multiple(uint8_t pulse_count,uint8_t pulse_length_ms,uint8_t inter_pulse_delay_100ms);
 /*
  * public variables
  */
 
-bool 					start_flag=false;
+#define TIMER_MODE		false
 #define SAMPLE_TIME		50
+
+extern 	bool		timer_flag;
+bool				start_flag=false;
 bool 				transmit_pulse=false;
 bool 				transmit_start_signature=false;
 
@@ -214,6 +219,9 @@ int main(void)
 			gpio_init();
 			delay_init();
 			acoustic_init();
+			pwm_init();
+			timer_init();
+			static int delay_anim=0;
 			/*
 			rs232_init();
 			rs232_enable();
@@ -224,24 +232,69 @@ int main(void)
 			OPAMP_Init_TypeDef voltage_buffer=OPA_INIT_UNITY_GAIN;
 			OPAMP_Enable(DAC0,OPA0,&voltage_buffer);
 
+			SegmentLCD_Init(false);
 
 			while(!start_flag);
 			GPIO_PinOutClear(OUT_PORT, LED);
 			GPIO_PinOutClear(OUT_PORT, LED_2);
+			SegmentLCD_AllOn();
+			delay_multiple(20,100);
+			SegmentLCD_AllOff();
+			my_lcd();
+#if TIMER_MODE==true
+			uint8_t 	pulse_count=0;
 
+			while (1) {
+				if(timer_flag){
+					if(pulse_count==0){
+						GPIO_PinOutToggle(OUT_PORT, LED);
+						SegmentLCD_Write((const char *)"0x5 Pulses");
+						pulses_multiple(5,150,3);
+						SegmentLCD_AllOff();
+					}
+					else{
+						GPIO_PinOutToggle(OUT_PORT, LED_2);
+						SegmentLCD_Write((const char *)"0x8 Pulses");
+						pulses_multiple(8,150,3);
+						SegmentLCD_AllOff();
+					}
+					pulse_count++;
+					if(pulse_count>=10){
+						pulse_count=0;
+					}
+					timer_flag=false;
+				}
+				delay_anim++;
+				if(delay_anim>10){
+					my_lcd();
+					delay_anim=0;
+				}
+				delay_ms(SAMPLE_TIME);
+			  }
+#else
 			while (1) {
 				if(transmit_start_signature==true){
 					GPIO_PinOutToggle(OUT_PORT, LED);
 					transmit_start_signature=false;
-					pulses_multiple(5,150,3);
+					SegmentLCD_Write((const char *)"0x5 Pulses");
+					pulses_multiple(5,150,7);
+					SegmentLCD_AllOff();
 				}
 				if(transmit_pulse==true){
 					GPIO_PinOutToggle(OUT_PORT, LED_2);
 					transmit_pulse=false;
-					pulses_multiple(8,150,3);
+					SegmentLCD_Write((const char *)"0x8 Pulses");
+					pulses_multiple(8,150,7);
+					SegmentLCD_AllOff();
+				}
+				delay_anim++;
+				if(delay_anim>10){
+					my_lcd();
+					delay_anim=0;
 				}
 				delay_ms(SAMPLE_TIME);
 			  }
+#endif
 //			pwm_init();
 //			rs232_init();
 //			rs232_enable();
@@ -280,6 +333,7 @@ void pulses_multiple(uint8_t pulse_count,uint8_t pulse_length_ms,uint8_t inter_p
 
 	for (loop_var=0;loop_var<pulse_count;loop_var++){
 		 pulses_generate(10);
+		 pwm_generate(10);
 		 if(pulse_length_ms<=100){
 			 delay_ms(pulse_length_ms);
 		 }
@@ -288,7 +342,18 @@ void pulses_multiple(uint8_t pulse_count,uint8_t pulse_length_ms,uint8_t inter_p
 			 delay_ms(pulse_length_ms-100);
 		 }
 		 pulses_stop();
+		 pwm_stop();
 		 delay_multiple(inter_pulse_delay_100ms,100);		//Inter-pulse delay in terms of 100ms,
 		 	 	 	 	 	 	 	 	 	 	 	 	 	//in tank experiment it was 700ms
 	}
+}
+void my_lcd(void){
+	static int i=0;
+	SegmentLCD_AllOff();
+	SegmentLCD_ARing(i,1);
+	i++;
+	if(i>7){
+		i=0;
+	}
+	return;
 }
